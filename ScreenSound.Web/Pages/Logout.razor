@@ -1,0 +1,18 @@
+﻿@page "/logout"
+@inject AuthAPI authAPI
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        if (await authAPI.VerificaAutenticado())
+        // Clear the authentication state
+        await authAPI.LogoutAsync();
+        await base.OnInitializedAsync();
+        
+        
+
+    }
+
+}
