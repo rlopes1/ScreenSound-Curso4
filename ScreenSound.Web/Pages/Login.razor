@@ -1,6 +1,8 @@
 ﻿@page "/Login"
 @using Microsoft.AspNetCore.Components.Authorization
 @inject AuthAPI authAPI 
+@inject NavigationManager navigation
+@attribute [AllowAnonymous]
 
 
 
@@ -44,9 +46,22 @@
     private string? email;
     private string? senha;
 
+    [SupplyParameterFromQuery]
+    public string? ReturnUrl{ get; set; }
+
     private async Task FazerLogin()
     {
-        await authAPI.LoginAsync(email, senha);
+        var resposta = await authAPI.LoginAsync(email, senha);
+
+        if (resposta.Sucesso)
+        {
+            if(ReturnUrl is not null)
+            navigation.NavigateTo(ReturnUrl);
+
+        }
+
+
+
 
     }
 
