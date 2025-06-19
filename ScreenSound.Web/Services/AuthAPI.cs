@@ -67,7 +67,7 @@ public class AuthAPI(IHttpClientFactory factory) : AuthenticationStateProvider
     {
         await _httpClient.PostAsync("auth/logout", null);
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync()); // Notifica que o estado de autenticação mudou
-    } // false para não usar cookies
+    } 
 
     public async Task<bool> VerificaAutenticado()
     {
