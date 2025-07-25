@@ -32,6 +32,7 @@ public class AuthAPI(IHttpClientFactory factory) : AuthenticationStateProvider
                 [
                     new Claim(ClaimTypes.Name, info.Email),
                     new Claim(ClaimTypes.Email, info.Email)
+
                 ];
 
             var identity = new ClaimsIdentity(dados, "Cookies");
