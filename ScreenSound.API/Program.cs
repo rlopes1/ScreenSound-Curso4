@@ -26,6 +26,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<DAL<Artista>>();
 builder.Services.AddScoped<DAL<Musica>>();
 builder.Services.AddScoped<DAL<Genero>>();
+builder.Services.AddScoped<DAL<PessoaComAcesso>>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -3,6 +3,8 @@ using ScreenSound.API.Requests;
 using ScreenSound.API.Response;
 using ScreenSound.Banco;
 using ScreenSound.Modelos;
+using ScreenSound.Shared.Dados.Modelos;
+using System.Security.Claims;
 
 namespace ScreenSound.API.Endpoints;
 
@@ -79,6 +81,68 @@ public static class ArtistasExtensions
             dal.Atualizar(artistaAAtualizar);
             return Results.Ok();
         });
+
+
+        groupBuilder.MapPost("avaliacao", ([FromBody] AvaliacaoArtistaRequest request, [FromServices] DAL<Artista> dalArtista, HttpContext context, [FromServices] DAL<PessoaComAcesso> dalPessoa) =>
+        {
+            var artista = dalArtista.RecuperarPor(a => a.Id == request.ArtistaId);
+            if( artista is null) return Results.NotFound();
+
+            var email = context.User.Claims
+            .FirstOrDefault(c=> c.Type == ClaimTypes.Email)?.Value
+            ?? throw new InvalidOperationException("Pessoa não está conectada.");
+
+            var pessoa = dalPessoa.RecuperarPor(p => p.Email.Equals(email))
+            ?? throw new InvalidOperationException("Pessoa não está conectada");
+
+      
+
+            // Verifica se já existe uma avaliação para o artista feita pela pessoa.
+            // Se não existir, adiciona uma nova nota para o artista.
+            // Caso contrário, atualiza a nota existente.
+
+            var avaliacao = artista.Avaliacoes.FirstOrDefault(a => a.ArtistaId == artista.Id && a.PessoaId == pessoa.Id);
+
+            if (avaliacao is null)
+            {
+                artista.AdicionarNota(pessoa.Id, request.Nota);
+            }
+            else
+            {
+                avaliacao.Nota = request.Nota;
+            }
+
+            
+            dalArtista.Atualizar(artista);
+
+            return Results.Created();
+
+        });
+
+
+
+        groupBuilder.MapGet("artistas/{id}/avaliacao", ([FromServices] DAL<Artista> artistaDAL, int id, HttpContext context, DAL<PessoaComAcesso> dalPessoa) =>
+        {
+            var artista = artistaDAL.RecuperarPor(a => a.Id == id);
+            if (artista is null) return Results.NotFound();
+
+            var email = context.User.Claims
+            .FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value
+            ?? throw new InvalidOperationException("Pessoa não está conectada.");
+
+            var pessoa = dalPessoa.RecuperarPor(p => p.Email.Equals(email))
+            ?? throw new InvalidOperationException("Pessoa não está conectada");
+
+            var avaliacao = artista.Avaliacoes.FirstOrDefault(a => a.ArtistaId == id && a.PessoaId == pessoa.Id);
+
+            if (avaliacao is null) return Results.NotFound("Avaliação não encontrada para este artista.");
+
+            return Results.Ok(new AvaliacaoArtistaResponse(id, avaliacao.Nota));
+
+
+
+
+        });
         #endregion
     }
 
@@ -89,7 +153,10 @@ public static class ArtistasExtensions
 
     private static ArtistaResponse EntityToResponse(Artista artista)
     {
-        return new ArtistaResponse(artista.Id, artista.Nome, artista.Bio, artista.FotoPerfil);
+        return new ArtistaResponse(artista.Id, artista.Nome, artista.Bio, artista.FotoPerfil)
+        {
+            Classificacao = artista.Avaliacoes.Select(a => a.Nota).DefaultIfEmpty(0).Average()
+        };
     }
 
   
